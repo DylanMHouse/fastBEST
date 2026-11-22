@@ -1,0 +1,35 @@
+# SLURM profile template for fastBEST (Snakemake >= 8).
+#
+# Usage (from the repository root):
+#   snakemake --profile workflow/profiles/slurm -n   # dry run
+#   snakemake --profile workflow/profiles/slurm
+
+
+executor: slurm
+jobs: 100                  # max jobs submitted at once
+latency-wait: 60           # seconds to wait for outputs on a shared filesystem
+retries: 2                 # resubmit failed jobs
+keep-going: true
+rerun-incomplete: true
+printshellcmds: true
+
+software-deployment-method: conda
+# conda-prefix: /path/to/shared/conda-envs   # optional: build envs once on a shared filesystem
+
+default-resources:
+  slurm_account: "your_account"      # CHANGE ME (delete if your site doesn't use accounts)
+  slurm_partition: "your_partition"  # CHANGE ME
+  mem_mb: 4000
+  runtime: "8h"
+  # slurm_extra: "'--qos=normal'"    # any other sbatch flags
+
+# Rules whose requirements may exceed your default partition's limits.
+# Point them at a partition that allows them.
+set-resources:
+  bwa_index:                         # 32 threads, 140 GB memory
+    slurm_partition: "<partition_name>"   # CHANGE ME
+  Mutect2:                           # 24 GB memory per interval shard
+    slurm_partition: "<partition_name>"   # CHANGE ME
+    runtime: "24h"
+  fastbe_search:                     # 32 threads, up to 80 h
+    slurm_partition: "<partitio_name>"      # CHANGE ME

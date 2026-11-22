@@ -39,3 +39,7 @@ workflow/workflow.sh
 *.cb
 *.cb2
 .*.lb
+
+
+# stuff
+.idea/

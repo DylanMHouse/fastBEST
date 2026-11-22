@@ -24,7 +24,6 @@ rule fastbe_search:
     resources:
         mem_mb = 24000,
         runtime = "80h",
-        slurm_partition = "normal"
     message:
         "Searching for optimal tree for a given frequency matrix"
     shell:
@@ -42,7 +41,6 @@ rule initial_fastbe_cluster:
     resources:
         mem_mb = 4000,
         runtime = "5m",
-        slurm_partition = "normal"
     conda:
         "../envs/fastbe.yaml"
     log:
@@ -60,7 +58,6 @@ checkpoint find_kneedle_point:
     resources:
         mem_mb = 4000,
         runtime = "2m",
-        slurm_partition = "normal"
     conda:
         "../envs/scripts.yaml"
     shell:
@@ -79,7 +76,6 @@ rule optimized_fastbe_cluster:
     resources:
         mem_mb = 4000,
         runtime = "3m",
-        slurm_partition = "normal"
     conda:
         "../envs/fastbe.yaml"
     shell:

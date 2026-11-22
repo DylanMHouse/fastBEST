@@ -16,28 +16,37 @@ fastBE supplementary tools (fastBEST) is a [Snakemake](https://snakemake.readthe
 
 # Dependencies
 
-* [conda](https://github.com/conda-forge/miniforge), version >24.1.2
-* [Snakemake](https://snakemake.readthedocs.io/en/stable/), version >=7.32.4
+* [uv](https://docs.astral.sh/uv/), installs Snakemake and its SLURM plugin from `pyproject.toml`
+* [conda](https://github.com/conda-forge/miniforge), version >24.1.2, builds the per-rule tool environments in `workflow/envs/`
+* Python 3.12 or 3.13 (uv can install this for you). Python 3.14+ is not supported yet because Snakemake's `immutables` dependency has no wheels for it.
 
 ---------------
 
 # Setup
 
-This pipeline would require that both [conda](https://github.com/conda-forge/miniforge) and [Snakemake](https://snakemake.readthedocs.io/en/stable/) be installed; ensure bioconda and conda-forge channels are added. Below are the steps to ensure those requirements are met.
+Snakemake itself is installed with uv, while the bioinformatics tools each rule uses (bwa-mem2, GATK, bcftools, fastBE, ...) are installed by Snakemake into conda environments on first run.
 
-1. Install `conda` through [miniforge]((https://github.com/conda-forge/miniforge#install)).
-2. Ensure the appropiate conda channels are added;
+1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/):
 
+```
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+2. Install `conda` through [miniforge](https://github.com/conda-forge/miniforge#install), and add the bioconda and conda-forge channels:
 
 ```
 conda config --add channels bioconda
 conda config --add channels conda-forge
 ```
 
-1. Install appropiate [Snakemake](https://snakemake.readthedocs.io/en/stable/):
+3. Clone this repository and install Snakemake. uv reads `.python-version`, downloads Python 3.13 if needed, and creates `.venv` from `uv.lock`:
 
 ```
-conda create -c conda-forge -c bioconda --name snakemake snakemake
+git clone <repository-url> fastBEST
+cd fastBEST
+uv python install 3.13
+uv sync
+uv run snakemake --version
 ```
 
 ---------------
@@ -73,45 +82,44 @@ The default parameters of this workflow strictly filters the called variants by 
 
 # Usage
 
-1. Navigate to workflow directory and activate the Snakemake conda environment.
+All commands are run from the repository root. Prefix them with `uv run`, or activate the environment once with `source .venv/bin/activate`.
+
+1. Run a dry-run to test if workflow produces correct outputs
 
 ```
-cd /path/to/fastBEST directory
-conda activate snakemake
+uv run snakemake --use-conda --cores <num-of-cpu-cores> -n
 ```
 
-2. Run a dry-run to test if workflow produces correct outputs
+2. Run the pipeline
 
 ```
-snakemake --use-conda --cores <num-ofcpu-cores> -n
-```
-
-3. Run the pipeline
-
-```
-snakemake --use-conda --cores <num-of-cpu-cores>
+uv run snakemake --use-conda --cores <num-of-cpu-cores>
 ```
 
 
 # Snakemake with SLURM
 
-To use this workflow with SLURM, an sbatch script should be created to send the job to the scheduler. An example of an sbatch script is shown below;
+On a SLURM cluster, Snakemake can submit each rule as its own job using [snakemake-executor-plugin-slurm](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html), which `uv sync` already installs. Memory, runtime and threads are set per rule in `workflow/rules/`; settings specific to your cluster live in a profile.
+
+1. Edit `workflow/profiles/slurm/config.yaml` and replace every value marked `CHANGE ME` (account and partitions). To find your cluster's values:
 
 ```
-#!/bin/bash
-
-#SBATCH --job-name=<job name>         # create a short name for your job
-#SBATCH --nodes=1                # Number of nodes for this job
-#SBATCH --ntasks=1               # total number of tasks across all nodes
-#SBATCH --cpus-per-task=<cpu-cores>        # cpu-cores per task (>1 if multi-threaded tasks    )
-#SBATCH --mem=16G                # memory to allocate per compute node.
-#SBATCH --time=48:00:00          # total run time limit (HH:MM:SS)
-#SBATCH --mail-type=ALL          # send email for all events
-#SBATCH --mail-user=<your email address>
-
-conda activate snakemake
-snakemake --use-conda --cores <number-of-cpu-cores>
+sinfo -s                                                  # partitions and time limits
+sacctmgr show assoc user=$USER format=account,partition   # your accounts
+scontrol show partition <name>                            # max memory / walltime
 ```
+
+2. From a login node (inside `tmux` or `screen` so it survives disconnects), dry-run and then launch:
+
+```
+uv run snakemake --profile workflow/profiles/slurm -n
+uv run snakemake --profile workflow/profiles/slurm
+```
+
+> [!TIP]
+> If your cluster does not allow long-running processes on login nodes, submit the Snakemake controller itself as a small job (1 CPU, ~2 GB, walltime longer than the whole workflow) that runs `uv run snakemake --profile workflow/profiles/slurm`.
+
+For other schedulers (PBS/Torque, SGE, LSF), copy the profile and switch to the [cluster-generic executor](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/cluster-generic.html).
 
 
 ----------------
