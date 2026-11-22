@@ -14,7 +14,6 @@ rule fastqc:
     threads: 1
     resources:
         mem_mb = 2024,
-        slurm_partition = "MSC",
         runtime = "3m"
     message:
         "Running fastqc to check quality of sequence and generate a report"
@@ -32,7 +31,6 @@ rule bwa_index:
     threads: 32
     resources:
         mem_mb = 140000,
-        slurm_partition = "highmem",
         runtime = "1h"
     message:
         "Generating index files for reference Genome"

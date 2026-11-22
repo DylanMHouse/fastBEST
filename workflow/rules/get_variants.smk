@@ -9,7 +9,6 @@ rule extract_pass_variants:
     resources:
         mem_mb = 1024,
         runtime = "1m",
-        slurm_partition = "MSC"
     conda:
         "../envs/mutect2.yaml",
     log:
@@ -33,11 +32,10 @@ rule vcf_converter:
         vcf=rules.extract_pass_variants.output.pass_variants_vcf,
     output:
         matrix=temp("results/{tumors}/af_matrix.txt"),
-        labeled_matrix = "results/{tumors}/labeled_matrix.txt,
+        labeled_matrix = "results/{tumors}/labeled_matrix.txt",
     resources:
         mem_mb = 1024,
         runtime = "1m",
-        slurm_partition = "MSC"
     log:
         "logs/{tumors}/vcf_converter.log",
     conda:
@@ -56,7 +54,6 @@ rule append_column:
     resources:
         mem_mb = 1024,
         runtime = "1m",
-        slurm_partition = "MSC"
     log:
         "logs/{tumors}/append_column.log"
     message:

@@ -11,7 +11,6 @@ rule plot_tree:
     resources:
         mem_mb = 3000,
         runtime = "2m",
-        slurm_partition = "normal"
     conda:
         "../envs/scripts.yaml"
     message:
@@ -37,7 +36,6 @@ rule get_ccf:
     resources:
         mem_mb = 3000,
         runtime = "2m",
-        slurm_partition = "normal"
     conda:
         "../envs/scripts.yaml"
     message:
